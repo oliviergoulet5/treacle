@@ -31,6 +31,7 @@ func TestClient_ExecutesSuccessfulRequest(t *testing.T) {
 		map[string]string{
 			"X-Test": "treacle",
 		},
+		`{"foo": "bar"}`,
 	)	
 
 	// Assert error

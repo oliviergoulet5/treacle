@@ -24,7 +24,7 @@ func (h *Handler) Request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := httpclient.Execute(req.Method, req.URL, req.Headers)
+	resp, err := httpclient.Execute(req.Method, req.URL, req.Headers, req.Body)
 	if err != nil {
 		log.Printf("Failed %v", err)
 		http.Error(w, err.Error(), http.StatusBadGateway)

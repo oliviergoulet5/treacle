@@ -3,12 +3,13 @@ package httpclient
 import (
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/oliviergoulet5/treacle/internal/models"
 )
 
-func Execute(method, url string, headers map[string]string) (*models.ExecuteRequestResponse, error) {
-	req, err := http.NewRequest(method, url, nil)
+func Execute(method, url string, headers map[string]string, body string) (*models.ExecuteRequestResponse, error) {
+	req, err := http.NewRequest(method, url, strings.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -24,14 +25,14 @@ func Execute(method, url string, headers map[string]string) (*models.ExecuteRequ
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.ExecuteRequestResponse{
 		StatusCode: resp.StatusCode,
-		Body:       string(body),
+		Body:       string(respBody),
 		Headers:    resp.Header,
 	}, nil
 }
