@@ -50,11 +50,13 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 type ExecuteRequest struct {
 	Method string `json:"method"`
 	URL string `json:"url"`
+	Headers map[string]string `json:"headers"`
 }
 
 type ExecuteRequestResponse struct {
 	StatusCode int `json:"statusCode"`
 	Body string `json:"body"`
+	Headers map[string][]string `json:"headers"`
 }
 
 // Request handler for POST /request
@@ -72,6 +74,10 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
+	}
+
+	for k, v := range executeRequest.Headers {
+		req.Header.Set(k, v)
 	}
 
 	client := &http.Client{}
@@ -92,7 +98,8 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 
 	executeRequestRes := ExecuteRequestResponse{
 		StatusCode: resp.StatusCode,
-		Body:       string(body),
+		Body: string(body),
+		Headers: resp.Header,
 	}
 
 	// Send response
