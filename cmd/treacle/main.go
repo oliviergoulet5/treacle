@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/oliviergoulet5/treacle/internal/api"
 )
 
 func main() {
@@ -14,15 +14,16 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", healthHandler)
-	mux.HandleFunc("POST /request", requestHandler)
+	h := &api.Handler{}
+	mux.HandleFunc("GET /health", h.Health)
+	mux.HandleFunc("POST /request", h.Request)
 
 	server := &http.Server{
-		Addr: ":" + port,
-		Handler: mux,
-		ReadTimeout: 10 * time.Second,
+		Addr:         ":" + port,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		IdleTimeout: 60 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	log.Println("treacle running on :" + port)
@@ -32,81 +33,9 @@ func main() {
 	}
 }
 
-// Get an environment variable. If the environment variable is not set, returns
-// a fallback.
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
 	}
-
 	return fallback
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
-}
-
-type ExecuteRequest struct {
-	Method string `json:"method"`
-	URL string `json:"url"`
-	Headers map[string]string `json:"headers"`
-}
-
-type ExecuteRequestResponse struct {
-	StatusCode int `json:"statusCode"`
-	Body string `json:"body"`
-	Headers map[string][]string `json:"headers"`
-}
-
-// Request handler for POST /request
-func requestHandler(w http.ResponseWriter, r *http.Request) {
-	// Read body
-	var executeRequest ExecuteRequest
-	err := json.NewDecoder(r.Body).Decode(&executeRequest)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	// TODO: Sanitize executeRequest.Method
-	req, err := http.NewRequest(executeRequest.Method, executeRequest.URL, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-
-	for k, v := range executeRequest.Headers {
-		req.Header.Set(k, v)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Failed %v", err)
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	executeRequestRes := ExecuteRequestResponse{
-		StatusCode: resp.StatusCode,
-		Body: string(body),
-		Headers: resp.Header,
-	}
-
-	// Send response
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(executeRequestRes); err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-		return
-	}
 }
