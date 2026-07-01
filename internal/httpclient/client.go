@@ -8,13 +8,15 @@ import (
 	"github.com/oliviergoulet5/treacle/internal/models"
 )
 
-func Execute(method, url string, headers map[string]string, body string) (*models.ExecuteRequestResponse, error) {
-	req, err := http.NewRequest(method, url, strings.NewReader(body))
+// Execute performs the HTTP request described by request. It returns the
+// response status code, headers, body, and any error encountered.
+func Execute(request models.ExecuteRequest) (*models.ExecuteRequestResponse, error) {
+	req, err := http.NewRequest(request.Method, request.URL, strings.NewReader(request.Body))
 	if err != nil {
 		return nil, err
 	}
 
-	for k, v := range headers {
+	for k, v := range request.Headers {
 		req.Header.Set(k, v)
 	}
 

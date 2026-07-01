@@ -5,13 +5,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/oliviergoulet5/treacle/internal/models"
 )
 
 func TestClient_ExecutesSuccessfulRequest(t *testing.T) {
 	var (
 		gotMethod string
 		gotHeader string
-		gotBody []byte
+		gotBody   []byte
 	)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,20 +27,20 @@ func TestClient_ExecutesSuccessfulRequest(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resp, err := Execute(
-		"POST",
-		server.URL,
-		map[string]string{
+	resp, err := Execute(models.ExecuteRequest{
+		Method: "POST",
+		URL:    server.URL,
+		Headers: map[string]string{
 			"X-Test": "treacle",
 		},
-		`{"foo": "bar"}`,
-	)	
+		Body: `{"foo": "bar"}`,
+	})
 
 	// Assert error
 	if err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
-	
+
 	// Assert request behavior
 	if gotMethod != "POST" {
 		t.Errorf("expected method POST, got %s", gotMethod)
