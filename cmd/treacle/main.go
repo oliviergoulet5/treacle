@@ -1,15 +1,28 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/oliviergoulet5/treacle/internal/api"
+	"github.com/oliviergoulet5/treacle/internal/tui"
 )
 
 func main() {
+	tuiMode := flag.Bool("tui", false, "launch TUI mode")
+	flag.Parse()
+
+	if *tuiMode {
+		p := tui.New()
+		if _, err := p.Run(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	port := getEnv("PORT", "8080")
 
 	mux := http.NewServeMux()
