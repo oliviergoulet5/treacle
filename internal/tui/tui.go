@@ -1,18 +1,18 @@
 package tui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type model struct {
-	ready 	bool
-	width		int
-	height	int
+	ready  bool
+	width  int
+	height int
 }
 
 func New() *tea.Program {
-	return tea.NewProgram(model{}, tea.WithAltScreen())
+	return tea.NewProgram(model{})
 }
 
 func (m model) Init() tea.Cmd {
@@ -26,7 +26,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		_ = msg
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -35,15 +35,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	if !m.ready {
-		return "Loading..."
+func (m model) View() tea.View {
+	v := tea.NewView("Loading...")
+	if m.ready {
+		v.SetContent(lipgloss.NewStyle().
+			Width(m.width).
+			Height(m.height).
+			Padding(1, 2).
+			Align(lipgloss.Top, lipgloss.Left).
+			Background(lipgloss.Color("#000000")).
+			Render("treacle"))
 	}
-	return lipgloss.NewStyle().
-		Width(m.width).
-		Height(m.height).
-		Padding(1, 2).
-		Align(lipgloss.Top, lipgloss.Left).
-		Background(lipgloss.Color("#000000")).
-		Render("treacle")
+	v.AltScreen = true
+	return v
 }
